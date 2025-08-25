@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Outbox.Infrastructure.PackageQueue;
+﻿using Outbox.Infrastructure.PackageQueue;
 using Outbox.Model;
 
 namespace Outbox.Infrastructure.Service;
@@ -13,20 +12,12 @@ public class PackageEventService
         _packageEventQueue = packageEventQueue;
     }
 
-    public async Task<bool> CreatePackageEventAsync(Package package, string? message, PackageStatus status)
+    public async Task<bool> RegisterPackageEvent(PackageEvent packageEvent)
     {
-        var packageEvent = new PackageEvent
-        (
-            package.TrackingCode,
-            PackageStatus.Created,
-            package.CurrentHubId ?? package.ParcelShopId,
-            message
-        );
-
         return await _packageEventQueue.EnqueueAsync(packageEvent);
     }
-
-    public async Task<bool> CreatePackageEventAsync(string trackingCode, string? message, PackageStatus status, Guid hubId)
+    
+    public async Task<bool> RegisterPackageEvent(string trackingCode, string? message, PackageStatus status, Guid hubId)
     {
         var packageEvent = new PackageEvent
         (

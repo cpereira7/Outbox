@@ -16,6 +16,9 @@ public record Package(
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
     
     public Guid? CurrentHubId { get; init; } 
+    
+    public PackageEvent ToCreatedEvent(string message = "Package created")
+        => new PackageEvent(TrackingCode, PackageStatus.Created, ParcelShopId, message);
 }
 
 public enum PackageStatus

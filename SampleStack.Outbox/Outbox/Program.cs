@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Outbox.Infrastructure.PackageQueue;
 using Outbox.Infrastructure.Persistence;
 using Outbox.Infrastructure.Service;
+using Outbox.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<PackageDbContext>(options =>
     options.UseSqlite("Data Source=testDb.sqlite"));
 
+builder.Services.AddScoped<PackageManager>();
 builder.Services.AddScoped<PackageEventService>();
 builder.Services.AddScoped<IPackageEventQueue, PackageEventQueue>();
 

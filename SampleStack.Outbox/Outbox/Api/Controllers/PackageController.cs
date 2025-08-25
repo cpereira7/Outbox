@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Outbox.Api.DTOs;
 using Outbox.Infrastructure.Persistence;
 using Outbox.Infrastructure.Service;
-using Outbox.Model;
+using Outbox.Service;
 
 namespace Outbox.Api.Controllers;
 
@@ -12,81 +12,35 @@ namespace Outbox.Api.Controllers;
 public class PackageController : ControllerBase
 {
     private readonly PackageDbContext _dbContext;
-    private readonly PackageEventService _packageEventService;
+    private readonly PackageManager _packageManager;
 
-    public PackageController(PackageDbContext dbContext, PackageEventService packageEventService)
+    public PackageController(PackageDbContext dbContext, PackageManager packageManager)
     {
         _dbContext = dbContext;
-        _packageEventService = packageEventService;
+        _packageManager = packageManager;
     }
 
     [HttpPost]
     public async Task<IActionResult> CreatePackage([FromBody] CreatePackageRequest request)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-        try
-        {
-            var package = new Package(
-                GenerateTrackingCode(),
-                request.ParcelShopId,
-                request.SenderId,
-                request.OriginAddressId,
-                request.DestinationAddressId,
-                request.WeightKg
-            );
+        var result = await _packageManager.CreatePackageAsync(request);
 
-            _dbContext.Packages.Add(package);
-            await _dbContext.SaveChangesAsync();
-        
-            var eventAdded = await _packageEventService.CreatePackageEventAsync(
-                package, 
-                "New Package created.", 
-                PackageStatus.Created);
-            
-            if (!eventAdded)
-            {
-                await transaction.RollbackAsync();
-                return Problem("Failed to create package event.", statusCode: 500);
-            }
-            
-            await transaction.CommitAsync();
-
-            var response = new CreatePackageResponse(package.TrackingCode, package.CreatedAt);
-
-            return CreatedAtAction(nameof(GetPackage), new { trackingCode = package.TrackingCode }, response);
-        }
-        catch (Exception ex)
-        {
-            await transaction.RollbackAsync();
-            return Problem(detail: ex.Message, statusCode: 500);
-        }
+        return result == null
+            ? Problem("Failed to create package.", statusCode: 500)
+            : CreatedAtAction(nameof(GetPackage), new { trackingCode = result.TrackingCode }, result);
     }
 
-    [HttpPost("{trackingCode}")]
-    public async Task<IActionResult> UpdatePackage(string trackingCode, [FromBody] UpdatePackageRequest request)
+    [HttpPost("update")]
+    public async Task<IActionResult> UpdatePackage([FromBody] UpdatePackageRequest request)
     {
-        try
-        {
-            var package = await _dbContext.Packages.FirstOrDefaultAsync(p => p.TrackingCode == trackingCode);
+        var response = await _packageManager.UpdatePackageAsync(request);
 
-            if (package == null)
-            {
-                return NotFound("Package not found in the system.");
-            }
-            
-            var eventAdded = await _packageEventService.CreatePackageEventAsync(trackingCode, request.Message, request.Status, request.CurrentHubId);
+        if (response == null)
+            return NotFound("Package not found.");
 
-            if (!eventAdded)
-            {
-                return Problem("Failed to add package event.", statusCode: 500);
-            }
-
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return Problem(detail: ex.Message, statusCode: 500);
-        }
+        return !response.Enqueued 
+            ? Problem("Failed to enqueue update event.", statusCode: 500) 
+            : Accepted(response);
     }
 
     [HttpGet("{trackingCode}")]
@@ -100,6 +54,4 @@ public class PackageController : ControllerBase
         }
         return Ok(package);
     }
-
-    private string GenerateTrackingCode() => $"CTT-9Z-{Random.Shared.Next(1000000000, 1999999999)}";
 }
