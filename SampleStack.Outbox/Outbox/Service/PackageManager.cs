@@ -69,5 +69,12 @@ public class PackageManager
         );
     }
     
+    public async Task<Package?> GetPackageByTrackingCodeAsync(string trackingCode)
+    {
+        return await _dbContext.Packages
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.TrackingCode == trackingCode);
+    }
+    
     private string GenerateTrackingCode() => $"CTT-9Z-{Random.Shared.Next(1000000000, 1999999999)}";
 }

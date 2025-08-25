@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Outbox.Api.DTOs;
 using Outbox.Infrastructure.Persistence;
 using Outbox.Infrastructure.Service;
+using Outbox.Model;
 using Outbox.Service;
 
 namespace Outbox.Api.Controllers;
@@ -21,6 +22,8 @@ public class PackageController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(CreatePackageResponse), 201)]
+    [ProducesResponseType(500)]
     public async Task<IActionResult> CreatePackage([FromBody] CreatePackageRequest request)
     {
         var result = await _packageManager.CreatePackageAsync(request);
@@ -31,6 +34,9 @@ public class PackageController : ControllerBase
     }
 
     [HttpPost("update")]
+    [ProducesResponseType(typeof(UpdatePackageResponse), 202)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
     public async Task<IActionResult> UpdatePackage([FromBody] UpdatePackageRequest request)
     {
         var response = await _packageManager.UpdatePackageAsync(request);
@@ -44,14 +50,14 @@ public class PackageController : ControllerBase
     }
 
     [HttpGet("{trackingCode}")]
-    public IActionResult GetPackage(string trackingCode)
+    [ProducesResponseType(typeof(Package), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetPackage(string trackingCode)
     {
-        var package = _dbContext.Packages.FirstOrDefault(p => p.TrackingCode == trackingCode);
-
-        if (package == null)
-        {
-            return NotFound();
-        }
-        return Ok(package);
+        var package = await _packageManager.GetPackageByTrackingCodeAsync(trackingCode);
+        
+        return package == null
+            ? Problem("Failed to get package.", statusCode: 500)
+            : Ok(package);
     }
 }
