@@ -6,5 +6,5 @@ public record PackageEvent(
     Guid? Location,
     string? Message)
 {
-    DateTimeOffset CreatedAt => DateTimeOffset.UtcNow;
+    private DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 }

@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Outbox.Infrastructure.PackageQueue;
 using Outbox.Infrastructure.Persistence;
-using Outbox.Infrastructure.Service;
+using Outbox.Infrastructure.Processor;
+using Outbox.Infrastructure.Repository;
 using Outbox.Service;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,9 +35,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<PackageDbContext>(options =>
     options.UseSqlite("Data Source=testDb.sqlite"));
 
-builder.Services.AddScoped<PackageManager>();
-builder.Services.AddScoped<PackageEventService>();
+// Core services
+builder.Services.AddScoped<IPackageService, PackageService>();
+builder.Services.AddScoped<IPackageRepository, PackageRepository>();
 builder.Services.AddScoped<IPackageEventQueue, PackageEventQueue>();
+
+// Background processor
+builder.Services.AddHostedService<PackageEventQueueProcessor>();
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>

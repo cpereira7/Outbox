@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Outbox.Api.DTOs;
-using Outbox.Infrastructure.Persistence;
-using Outbox.Infrastructure.Service;
 using Outbox.Model;
 using Outbox.Service;
 
@@ -12,13 +9,11 @@ namespace Outbox.Api.Controllers;
 [Route("api/[controller]")]
 public class PackageController : ControllerBase
 {
-    private readonly PackageDbContext _dbContext;
-    private readonly PackageManager _packageManager;
+    private readonly IPackageService _packageService;
 
-    public PackageController(PackageDbContext dbContext, PackageManager packageManager)
+    public PackageController(IPackageService packageService)
     {
-        _dbContext = dbContext;
-        _packageManager = packageManager;
+        _packageService = packageService;
     }
 
     [HttpPost]
@@ -26,7 +21,7 @@ public class PackageController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> CreatePackage([FromBody] CreatePackageRequest request)
     {
-        var result = await _packageManager.CreatePackageAsync(request);
+        var result = await _packageService.CreatePackageAsync(request);
 
         return result == null
             ? Problem("Failed to create package.", statusCode: 500)
@@ -39,7 +34,7 @@ public class PackageController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> UpdatePackage([FromBody] UpdatePackageRequest request)
     {
-        var response = await _packageManager.UpdatePackageAsync(request);
+        var response = await _packageService.UpdatePackageStatusAsync(request);
 
         if (response == null)
             return NotFound("Package not found.");
@@ -54,10 +49,10 @@ public class PackageController : ControllerBase
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetPackage(string trackingCode)
     {
-        var package = await _packageManager.GetPackageByTrackingCodeAsync(trackingCode);
+        var package = await _packageService.GetPackageByTrackingCodeAsync(trackingCode);
         
         return package == null
-            ? Problem("Failed to get package.", statusCode: 500)
+            ? NotFound("Package not found.")
             : Ok(package);
     }
 }

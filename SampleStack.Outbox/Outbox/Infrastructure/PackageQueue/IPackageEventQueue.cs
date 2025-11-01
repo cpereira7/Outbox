@@ -4,7 +4,7 @@ namespace Outbox.Infrastructure.PackageQueue;
 
 public interface IPackageEventQueue
 {
-    Task<bool> EnqueueAsync(PackageEvent packageEvent);
-    
+    void Enqueue(PackageEvent packageEvent, OutboxMessageType type);
+
     Task<bool> TryDequeueAsync(string trackingCode);
 }

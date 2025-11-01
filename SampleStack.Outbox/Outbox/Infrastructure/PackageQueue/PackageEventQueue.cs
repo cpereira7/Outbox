@@ -16,37 +16,20 @@ public class PackageEventQueue : IPackageEventQueue
         _logger = logger;
     }
 
-    public async Task<bool> EnqueueAsync(PackageEvent packageEvent)
+    public void Enqueue(PackageEvent packageEvent, OutboxMessageType type)
     {
-        var queueMessage = CreateOutboxMessage(packageEvent);
-
-        try
-        {
-            _dbContext.OutboxMessages.Add(queueMessage);
-            await _dbContext.SaveChangesAsync();
-            
-            _logger.LogInformation("Outbox message enqueued for {Tracking}", packageEvent.TrackingCode);
-                
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send outbox message for {Tracking} with {Status}", 
-                packageEvent.TrackingCode, packageEvent.Status);
-            return false;
-        }
-    }
-
-    private static OutboxMessage CreateOutboxMessage(PackageEvent packageEvent)
-    {
-        return new OutboxMessage
+        var outboxMessage = new OutboxMessage
         {
             Id = Guid.NewGuid(),
             TrackingCode = packageEvent.TrackingCode,
-            Type = OutboxMessageType.Create,
+            Type = type,
             Payload = JsonSerializer.Serialize(packageEvent),
-            OccurredAt = DateTimeOffset.Now
+            OccurredAt = DateTimeOffset.UtcNow
         };
+
+        _dbContext.OutboxMessages.Add(outboxMessage);
+        _logger.LogInformation("Outbox message queued: {Type} for {Tracking}", 
+            type, packageEvent.TrackingCode);
     }
 
     public async Task<bool> TryDequeueAsync(string trackingCode)
@@ -59,7 +42,7 @@ public class PackageEventQueue : IPackageEventQueue
             return false;
         
         pendingUpdate.IsCanceled = true;
-        pendingUpdate.ProcessedAt = DateTimeOffset.Now;
+        pendingUpdate.ProcessedAt = DateTimeOffset.UtcNow;
         
         await _dbContext.SaveChangesAsync();
 

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Outbox.Infrastructure.PackageQueue;
 using Outbox.Infrastructure.Persistence;
-
+ 
 namespace Outbox.Infrastructure.Processor;
 
 public class PackageEventQueueProcessor : BackgroundService
@@ -55,7 +55,7 @@ public class PackageEventQueueProcessor : BackgroundService
     private async Task ProcessOutboxMessage(OutboxMessage outboxMessage, PackageDbContext dbContext, CancellationToken stoppingToken)
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(stoppingToken);
-        
+
         try
         {
             // Reload the message for update with optimistic concurrency
@@ -69,10 +69,10 @@ public class PackageEventQueueProcessor : BackgroundService
 
             messageToProcess.IsCompleted = true;
             messageToProcess.ProcessedAt = DateTimeOffset.UtcNow;
-            
+
             await dbContext.SaveChangesAsync(stoppingToken);
             await transaction.CommitAsync(stoppingToken);
-            
+
             // TODO: do something like updating the package information.
         }
         catch (DbUpdateConcurrencyException ex)
