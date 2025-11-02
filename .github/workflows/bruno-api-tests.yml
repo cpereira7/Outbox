@@ -10,29 +10,29 @@ on:
 jobs:
   api-tests:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '9.0.x'
-        
+
     - name: Restore dependencies
       run: dotnet restore SampleStack.sln
-      
+
     - name: Build
       run: dotnet build SampleStack.sln --no-restore --configuration Release
-      
+
     - name: Install EF Core tools
       run: dotnet tool install --global dotnet-ef
-      
+
     - name: Apply database migrations
       run: dotnet ef database update --no-build --configuration Release
       working-directory: SampleStack.Outbox/Outbox
-      
+
     - name: Start API in background
       run: |
         cd SampleStack.Outbox/Outbox
@@ -41,33 +41,33 @@ jobs:
       env:
         ASPNETCORE_URLS: http://localhost:5000
         ASPNETCORE_ENVIRONMENT: Development
-        
+
     - name: Wait for API to be ready
       run: |
         echo "Waiting for API to be ready..."
         timeout 60 bash -c 'until curl -f http://localhost:5000/swagger/index.html > /dev/null 2>&1; do sleep 2; done'
         echo "API is ready!"
-        
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        
+
     - name: Install Bruno CLI
       run: npm install -g @usebruno/cli
-      
+
     - name: Run Bruno tests
       run: |
         bru run . --env-var baseUrl=http://localhost:5000 -r --reporter-junit results.xml
       working-directory: Bruno/Outbox
-        
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: bruno-test-results
         path: Bruno/Outbox/results.xml
-        
+
     - name: Stop API
       if: always()
       run: |
