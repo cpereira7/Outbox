@@ -31,18 +31,17 @@ public class PackageService : IPackageService
         
         try
         {
-            // 1. Create package entity
+            // Create package entity
             var trackingCode = GenerateTrackingCode();
             var package = Package.Create(request, trackingCode);
             
-            // 2. Add to repository (doesn't save yet)
             await _packageRepository.CreateAsync(package);
             
-            // 3. Queue outbox message (doesn't save yet)
+            // Queue outbox message
             var packageEvent = package.ToCreatedEvent();
             _outboxQueue.Enqueue(packageEvent, OutboxMessageType.Create);
             
-            // 4. Single atomic save for both Package + OutboxMessage
+            // Save both package and outbox message
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
             
@@ -63,12 +62,11 @@ public class PackageService : IPackageService
         
         try
         {
-            // 1. Get and update package
+            // Update package status
             var package = await _packageRepository.GetByTrackingCodeAsync(request.TrackingCode);
             if (package == null)
                 return null;
-
-            // 2. Update package with new status
+            
             var updatedPackage = package with 
             { 
                 CurrentStatus = request.Status,
@@ -78,7 +76,7 @@ public class PackageService : IPackageService
             
             await _packageRepository.UpdateAsync(updatedPackage);
             
-            // 3. Queue the update event
+            // Queue outbox message
             var updateEvent = new PackageEvent(
                 request.TrackingCode,
                 request.Status,
@@ -88,7 +86,7 @@ public class PackageService : IPackageService
             
             _outboxQueue.Enqueue(updateEvent, OutboxMessageType.Update);
             
-            // 4. Atomic save for both Package update + OutboxMessage
+            // Commit the package update and outbox message
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
             
@@ -115,6 +113,6 @@ public class PackageService : IPackageService
         return await _packageRepository.GetByTrackingCodeAsync(trackingCode);
     }
     
-    private string GenerateTrackingCode() => 
+    private static string GenerateTrackingCode() => 
         $"CTT-9Z-{Random.Shared.Next(1000000, 1999999999)}";
 }

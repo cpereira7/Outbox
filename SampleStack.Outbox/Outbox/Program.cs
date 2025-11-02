@@ -39,6 +39,7 @@ builder.Services.AddDbContext<PackageDbContext>(options =>
 builder.Services.AddScoped<IPackageService, PackageService>();
 builder.Services.AddScoped<IPackageRepository, PackageRepository>();
 builder.Services.AddScoped<IPackageEventQueue, PackageEventQueue>();
+builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
 
 // Background processor
 builder.Services.AddHostedService<PackageEventQueueProcessor>();
