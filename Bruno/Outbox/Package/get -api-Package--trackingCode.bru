@@ -1,0 +1,11 @@
+meta {
+  name: get /api/Package/:trackingCode
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/Package/{{trackingCode}}
+  body: none
+  auth: inherit
+}

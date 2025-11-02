@@ -1,0 +1,20 @@
+meta {
+  name: post /api/Package/update
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/Package/update
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "trackingCode": "{{trackingCode}}",
+    "status": 1,
+    "currentHubId": "{{$guid}}",
+    "message": "Package is at this location."
+  }
+}

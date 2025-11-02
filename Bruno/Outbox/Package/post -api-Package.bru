@@ -1,0 +1,53 @@
+meta {
+  name: post /api/Package
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/Package
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "parcelShopId": "{{$guid}}",
+    "senderId": "{{$guid}}",
+    "originAddressId": "{{$guid}}",
+    "destinationAddressId": "{{$guid}}",
+    "weightKg": "{{$randomInt}}"
+  }
+}
+
+vars:post-response {
+  trackingCode: res.body.trackingCode
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Response should have trackingCode", function() {
+    expect(res.body.trackingCode).to.be.a('string');
+  });
+  
+  test("Tracking code should match CTT format", function() {
+    const trackingCodePattern = /^CTT-[A-Z0-9]{2}-\d+$/;
+    expect(res.body.trackingCode).to.match(trackingCodePattern);
+  });
+  
+  test("Response should have createdAt", function() {
+    expect(res.body.createdAt).to.be.a('string');
+    });
+  
+  test("createdAt should be today's date", function() {
+    const createdDate = new Date(res.body.createdAt);
+    const today = new Date();
+      
+    expect(createdDate.getUTCFullYear()).to.equal(today.getUTCFullYear());
+    expect(createdDate.getUTCMonth()).to.equal(today.getUTCMonth());
+    expect(createdDate.getUTCDate()).to.equal(today.getUTCDate());
+  });
+}
