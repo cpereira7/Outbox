@@ -30,14 +30,12 @@ public class PackageRepository : IPackageRepository
     public Task<Package> CreateAsync(Package package)
     {
         _dbContext.Packages.Add(package);
-        // Note: Don't call SaveChanges - let service control transaction
         return Task.FromResult(package);
     }
 
     public Task UpdateAsync(Package package)
     {
         _dbContext.Packages.Update(package);
-        // Note: Don't call SaveChanges - let service control transaction
         return Task.CompletedTask;
     }
 }
