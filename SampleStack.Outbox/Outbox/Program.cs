@@ -33,7 +33,7 @@ builder.Services.AddControllers()
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<PackageDbContext>(options =>
-    options.UseSqlite("Data Source=testDb.sqlite"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Core services
 builder.Services.AddScoped<IPackageService, PackageService>();
