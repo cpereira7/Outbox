@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Outbox.Infrastructure.PackageQueue;
 
@@ -14,6 +15,11 @@ public record OutboxMessage
     
     public bool IsCanceled { get; set; } = false;
     public bool IsCompleted { get; set; } = false;
+    
+    [ConcurrencyCheck]
+    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+    [Column("xmin")]
+    public uint RowVersion { get; set; }
 }
 
 public enum OutboxMessageType

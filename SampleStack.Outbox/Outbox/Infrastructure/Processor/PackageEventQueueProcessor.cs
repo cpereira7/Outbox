@@ -32,7 +32,7 @@ public class PackageEventQueueProcessor : BackgroundService
             {
                 var eventsInQueue = await dbContext.OutboxMessages
                     .Where(e => !e.IsCanceled && !e.IsCompleted)
-                    //.OrderByDescending(e => e.OccurredAt)
+                    .OrderByDescending(e => e.OccurredAt)
                     .Take(10)
                     .ToListAsync(stoppingToken);
 
