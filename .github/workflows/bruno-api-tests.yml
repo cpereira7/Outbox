@@ -17,6 +17,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Start PostgreSQL with docker-compose
+      run: docker-compose up -d postgres
+
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        echo "Waiting for PostgreSQL to be ready..."
+        timeout 60 bash -c 'until docker-compose exec -T postgres pg_isready -U outbox_user -d outbox_db > /dev/null 2>&1; do sleep 2; done'
+        echo "PostgreSQL is ready!"
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -76,3 +85,7 @@ jobs:
         if [ -f SampleStack.Outbox/Outbox/api.pid ]; then
           kill $(cat SampleStack.Outbox/Outbox/api.pid) || true
         fi
+
+    - name: Stop PostgreSQL
+      if: always()
+      run: docker-compose down -v
