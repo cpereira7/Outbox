@@ -6,7 +6,6 @@ using Outbox.Infrastructure.PackageQueue;
 using Outbox.Infrastructure.Persistence;
 using Outbox.Model;
 using Outbox.Service;
-using Testcontainers.PostgreSql;
 
 namespace Outbox.Tests.Infrastructure.Processor;
 
@@ -15,47 +14,21 @@ namespace Outbox.Tests.Infrastructure.Processor;
 /// These tests verify that xmin-based concurrency control works correctly with real PostgreSQL.
 /// </summary>
 [Trait("Category", "Integration")]
-public class OutboxMessageConcurrencyTests : IAsyncLifetime
+public class OutboxMessageConcurrencyTests(PostgreSqlContainerFixture fixture) 
+    : IClassFixture<PostgreSqlContainerFixture>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgresContainer;
     private PackageDbContext _dbContext = null!;
     private IServiceProvider _serviceProvider = null!;
 
-    public OutboxMessageConcurrencyTests()
-    {
-        // Create a PostgreSQL container for testing
-        var builder = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
-            .WithDatabase("outbox_test_db")
-            .WithUsername("test_user")
-            .WithPassword("test_pass");
-        
-        // Only configure Docker endpoint for local WSL development
-        // In CI/CD environments (GitHub Actions), Docker is available by default
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")))
-        {
-            builder = builder.WithDockerEndpoint("tcp://localhost:2375");
-        }
-        
-        _postgresContainer = builder.Build();
-    }
-
     public async Task InitializeAsync()
     {
-        // Start the container
-        await _postgresContainer.StartAsync();
-        
-        // Setup dependency injection for processor
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
-        
-        // Create a new DbContext instance per scope using the same connection string
-        services.AddDbContext<PackageDbContext>(options =>
-            options.UseNpgsql(_postgresContainer.GetConnectionString()));
+        services.AddDbContext<PackageDbContext>(options => 
+            options.UseNpgsql(fixture.ConnectionString));
         
         _serviceProvider = services.BuildServiceProvider();
         
-        // Get DbContext and apply migrations
         var scope = _serviceProvider.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<PackageDbContext>();
         await _dbContext.Database.MigrateAsync();
@@ -64,15 +37,11 @@ public class OutboxMessageConcurrencyTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await _dbContext.DisposeAsync();
+        
         if (_serviceProvider is IAsyncDisposable asyncDisposable)
-        {
             await asyncDisposable.DisposeAsync();
-        }
         else
-        {
             (_serviceProvider as IDisposable)?.Dispose();
-        }
-        await _postgresContainer.DisposeAsync();
     }
 
     [Fact]

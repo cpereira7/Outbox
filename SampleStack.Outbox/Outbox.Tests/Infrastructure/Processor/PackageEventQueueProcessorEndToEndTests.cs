@@ -8,7 +8,6 @@ using Outbox.Infrastructure.Persistence;
 using Outbox.Infrastructure.Processor;
 using Outbox.Model;
 using Outbox.Service;
-using Testcontainers.PostgreSql;
 
 namespace Outbox.Tests.Infrastructure.Processor;
 
@@ -17,43 +16,21 @@ namespace Outbox.Tests.Infrastructure.Processor;
 /// Tests the complete workflow including the background processor running in parallel.
 /// </summary>
 [Trait("Category", "Integration")]
-public class PackageEventQueueProcessorEndToEndTests : IAsyncLifetime
+public class PackageEventQueueProcessorEndToEndTests(PostgreSqlContainerFixture fixture) 
+    : IClassFixture<PostgreSqlContainerFixture>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgresContainer;
     private PackageDbContext _dbContext = null!;
     private IHost _host = null!;
 
-    public PackageEventQueueProcessorEndToEndTests()
-    {
-        var builder = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
-            .WithDatabase("outbox_e2e_test")
-            .WithUsername("test_user")
-            .WithPassword("test_pass");
-        
-        // Only configure Docker endpoint for local WSL development
-        // In CI/CD environments (GitHub Actions), Docker is available by default
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")))
-        {
-            builder = builder.WithDockerEndpoint("tcp://localhost:2375");
-        }
-        
-        _postgresContainer = builder.Build();
-    }
-
     public async Task InitializeAsync()
     {
-        await _postgresContainer.StartAsync();
-
-        // Clear static notification list
         TestNotificationService.NotificationsSent.Clear();
 
-        // Build a complete host with the background service
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>
             {
                 services.AddDbContext<PackageDbContext>(options =>
-                    options.UseNpgsql(_postgresContainer.GetConnectionString()));
+                    options.UseNpgsql(fixture.ConnectionString));
 
                 services.AddScoped<INotificationService, TestNotificationService>();
                 services.AddHostedService<PackageEventQueueProcessor>();
@@ -61,7 +38,6 @@ public class PackageEventQueueProcessorEndToEndTests : IAsyncLifetime
             })
             .Build();
 
-        // Get DbContext and apply migrations
         using var scope = _host.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<PackageDbContext>();
         await _dbContext.Database.MigrateAsync();
@@ -71,8 +47,6 @@ public class PackageEventQueueProcessorEndToEndTests : IAsyncLifetime
     {
         await _host.StopAsync();
         _host.Dispose();
-
-        await _postgresContainer.DisposeAsync();
     }
 
     [Fact]
