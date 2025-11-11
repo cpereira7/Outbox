@@ -16,6 +16,7 @@ namespace Outbox.Tests.Infrastructure.Processor;
 /// Full end-to-end integration tests for the PackageEventQueueProcessor background service.
 /// Tests the complete workflow including the background processor running in parallel.
 /// </summary>
+[Trait("Category", "Integration")]
 public class PackageEventQueueProcessorEndToEndTests : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgresContainer;

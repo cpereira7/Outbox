@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Outbox.Tests.Infrastructure.Repository;
 
+[Trait("Category", "Unit")]
 public class PackageRepositoryTests : IDisposable
 {
     private readonly PackageDbContext _dbContext;

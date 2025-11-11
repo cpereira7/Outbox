@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Outbox.Tests.Service;
 
+[Trait("Category", "Unit")]
 public class PackageServiceTests : IDisposable
 {
     private readonly PackageDbContext _dbContext;

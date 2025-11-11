@@ -14,6 +14,7 @@ namespace Outbox.Tests.Infrastructure.Processor;
 /// Tests for PostgreSQL optimistic concurrency behavior using xmin with Testcontainers.
 /// These tests verify that xmin-based concurrency control works correctly with real PostgreSQL.
 /// </summary>
+[Trait("Category", "Integration")]
 public class OutboxMessageConcurrencyTests : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgresContainer;

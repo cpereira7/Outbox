@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Outbox.Tests.Infrastructure.Processor;
 
+[Trait("Category", "Unit")]
 public class PackageEventQueueProcessorTests : IDisposable
 {
     private readonly PackageDbContext _dbContext;

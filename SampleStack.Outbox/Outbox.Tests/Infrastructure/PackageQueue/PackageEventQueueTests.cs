@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Outbox.Tests.Infrastructure.PackageQueue;
 
+[Trait("Category", "Unit")]
 public class PackageEventQueueTests : IDisposable
 {
     private readonly PackageDbContext _dbContext;
