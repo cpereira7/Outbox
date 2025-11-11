@@ -25,13 +25,20 @@ public class PackageEventQueueProcessorEndToEndTests : IAsyncLifetime
 
     public PackageEventQueueProcessorEndToEndTests()
     {
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithDockerEndpoint("tcp://localhost:2375")
+        var builder = new PostgreSqlBuilder()
             .WithImage("postgres:16-alpine")
             .WithDatabase("outbox_e2e_test")
             .WithUsername("test_user")
-            .WithPassword("test_pass")
-            .Build();
+            .WithPassword("test_pass");
+        
+        // Only configure Docker endpoint for local WSL development
+        // In CI/CD environments (GitHub Actions), Docker is available by default
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")))
+        {
+            builder = builder.WithDockerEndpoint("tcp://localhost:2375");
+        }
+        
+        _postgresContainer = builder.Build();
     }
 
     public async Task InitializeAsync()
