@@ -15,6 +15,29 @@
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - outbox-network
+
+  api:
+    build:
+      context: .
+      dockerfile: SampleStack.Outbox/Outbox/Dockerfile
+    container_name: outbox-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=outbox_db;Username=outbox_user;Password=outbox_pass"
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - outbox-network
+
+networks:
+  outbox-network:
+    driver: bridge
 
 volumes:
   postgres_data:
