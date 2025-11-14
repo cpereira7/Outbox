@@ -56,13 +56,13 @@ public class PackageServiceTests : IDisposable
     }
     
     private static CreatePackageRequest CreateValidPackageRequest() =>
-        new (
-            ParcelShopId: Guid.NewGuid(),
-            SenderId: Guid.NewGuid(),
-            OriginAddressId: Guid.NewGuid(),
-            DestinationAddressId: Guid.NewGuid(),
-            WeightKg: 2.0m
-        );
+        new() {
+            ParcelShopId = Guid.NewGuid(),
+            SenderId = Guid.NewGuid(),
+            OriginAddressId = Guid.NewGuid(),
+            DestinationAddressId = Guid.NewGuid(),
+            WeightKg = 2.0m
+        };
 
     private static UpdatePackageRequest CreateValidUpdatePackageRequest(string trackingCode) =>
         new (

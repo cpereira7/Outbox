@@ -1,9 +1,14 @@
-﻿namespace Outbox.Api.DTOs;
+﻿using System.ComponentModel.DataAnnotations;
 
-public record CreatePackageRequest(
-    Guid ParcelShopId,
-    Guid SenderId,
-    Guid OriginAddressId,
-    Guid DestinationAddressId,
-    decimal WeightKg
-);
+namespace Outbox.Api.DTOs;
+
+public record CreatePackageRequest
+{
+    public required Guid ParcelShopId { get; init; }
+    public required Guid SenderId { get; init; }
+    public required Guid OriginAddressId { get; init; }
+    public required Guid DestinationAddressId { get; init; }
+    
+    [Range(0.01, double.MaxValue, ErrorMessage = "Weight must be greater than zero")]
+    public required decimal WeightKg { get; init; }
+}

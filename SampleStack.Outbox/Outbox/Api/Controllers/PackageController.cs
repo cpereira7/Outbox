@@ -21,6 +21,9 @@ public class PackageController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> CreatePackage([FromBody] CreatePackageRequest request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        
         var result = await _packageService.CreatePackageAsync(request);
 
         return result == null
