@@ -12,6 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    
+    env:
+      POSTGRES_DB: outbox_db
+      POSTGRES_USER: outbox_user
+      POSTGRES_PASSWORD: outbox_pass
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      API_PORT: 5000
 
     steps:
     - name: Checkout code

@@ -3,15 +3,15 @@
     image: postgres:16-alpine
     container_name: outbox-postgres
     environment:
-      POSTGRES_DB: outbox_db
-      POSTGRES_USER: outbox_user
-      POSTGRES_PASSWORD: outbox_pass
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U outbox_user -d outbox_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,7 +24,7 @@
       dockerfile: SampleStack.Outbox/Outbox/Dockerfile.migrations
     container_name: outbox-migrations
     environment:
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=outbox_db;Username=outbox_user;Password=outbox_pass"
+      ConnectionStrings__DefaultConnection: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,11 +39,11 @@
       dockerfile: SampleStack.Outbox/Outbox/Dockerfile
     container_name: outbox-api
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=outbox_db;Username=outbox_user;Password=outbox_pass"
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+      ConnectionStrings__DefaultConnection: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
     ports:
-      - "5000:8080"
+      - "${API_PORT}:8080"
     depends_on:
       postgres:
         condition: service_healthy
