@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copy project file and restore
+COPY ["SampleStack.Outbox/Outbox/Outbox.csproj", "SampleStack.Outbox/Outbox/"]
+RUN dotnet restore "SampleStack.Outbox/Outbox/Outbox.csproj"
+
+# Copy source code
+COPY . .
+WORKDIR "/src/SampleStack.Outbox/Outbox"
+
+# Install EF Core tools and create migration bundle
+RUN dotnet tool install --global dotnet-ef --version 9.0.8
+ENV PATH="${PATH}:/root/.dotnet/tools"
+RUN dotnet ef migrations bundle --self-contained -r linux-x64 -o /migrations/efbundle
+
+# Final stage - minimal runtime image
+FROM mcr.microsoft.com/dotnet/runtime:9.0
+WORKDIR /migrations
+COPY --from=build /migrations/efbundle .
+RUN chmod +x efbundle
+ENTRYPOINT ["./efbundle"]

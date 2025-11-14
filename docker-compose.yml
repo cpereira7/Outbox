@@ -18,6 +18,21 @@
     networks:
       - outbox-network
 
+  migrations:
+    build:
+      context: .
+      dockerfile: SampleStack.Outbox/Outbox/Dockerfile.migrations
+    container_name: outbox-migrations
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=outbox_db;Username=outbox_user;Password=outbox_pass"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - outbox-network
+    profiles:
+      - migrations
+
   api:
     build:
       context: .
