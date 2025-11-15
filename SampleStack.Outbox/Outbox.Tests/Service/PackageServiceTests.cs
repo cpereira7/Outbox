@@ -65,12 +65,12 @@ public class PackageServiceTests : IDisposable
         };
 
     private static UpdatePackageRequest CreateValidUpdatePackageRequest(string trackingCode) =>
-        new (
-            TrackingCode: trackingCode,
-            Status: PackageStatus.InTransit,
-            CurrentHubId: Guid.NewGuid(),
-            Message: "Package is in transit"
-        );
+        new (){
+            TrackingCode = trackingCode,
+            Status = PackageStatus.InTransit,
+            CurrentHubId = Guid.NewGuid(),
+            Message = "Package is in transit"
+        };
         
     private static Package CreatePackage(string trackingCode) =>
         new (

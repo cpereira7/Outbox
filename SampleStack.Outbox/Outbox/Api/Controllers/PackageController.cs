@@ -37,6 +37,9 @@ public class PackageController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> UpdatePackage([FromBody] UpdatePackageRequest request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        
         var response = await _packageService.UpdatePackageStatusAsync(request);
 
         if (response == null)
