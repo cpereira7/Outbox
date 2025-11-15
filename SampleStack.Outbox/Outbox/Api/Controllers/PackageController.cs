@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Outbox.Api.DTOs;
+using Outbox.Api.Filters;
 using Outbox.Model;
 using Outbox.Service;
 
@@ -7,6 +8,7 @@ namespace Outbox.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[ValidateModel]
 public class PackageController : ControllerBase
 {
     private readonly IPackageService _packageService;
@@ -21,9 +23,6 @@ public class PackageController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> CreatePackage([FromBody] CreatePackageRequest request)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-        
         var result = await _packageService.CreatePackageAsync(request);
 
         return result == null
@@ -37,9 +36,6 @@ public class PackageController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> UpdatePackage([FromBody] UpdatePackageRequest request)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-        
         var response = await _packageService.UpdatePackageStatusAsync(request);
 
         if (response == null)
